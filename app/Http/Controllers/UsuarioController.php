@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Usuarios;
-use Illuminate\Support\Str;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class UsuarioController extends Controller 
 {
@@ -13,7 +13,6 @@ class UsuarioController extends Controller
     {
         $query = Usuarios::where('state', 'A');
 
-        // Aplicar filtros si existen
         if ($request->has('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -23,38 +22,33 @@ class UsuarioController extends Controller
             });
         }
 
-        $usuarios = $query->get();
+        $usuarios = $query->paginate(10);
+        
+        if ($request->has('search')) {
+            $usuarios->appends(['search' => $request->search]);
+        }
+
         return view('usuarios.index', compact('usuarios'));
+    }
+
+    public function create()
+    {
+        $action = route('usuarios.store');
+        $method = 'POST';
+        $title = 'Crear Usuario';
+        
+        return view('usuarios.form', compact('action', 'method', 'title'));
     }
 
     public function store(Request $request) 
     {
         try {
-            Log::info('Datos recibidos en store:', $request->all());
-
-            $validated = $request->validate([
-                'nombre' => 'required|string|max:100',
-                'apellido' => 'required|string|max:100',
-                'telefono' => 'nullable|string|max:20',
-                'direccion' => 'nullable|string|max:255',
-                'dni' => 'required|string|max:20|unique:usuarios,dni',
-            ]);
+            $validated = $this->validateUsuario($request);
             
-            $usuario = new Usuarios();
-            $usuario->id = (string) Str::uuid();
-            $usuario->nombre = $validated['nombre'];
-            $usuario->apellido = $validated['apellido'];
-            $usuario->telefono = $validated['telefono'] ?? null;
-            $usuario->direccion = $validated['direccion'] ?? null;
-            $usuario->dni = $validated['dni'];
-            $usuario->state = 'A'; // Estado por defecto
+            $usuario = Usuarios::create($validated);
             
-            if (!$usuario->save()) {
-                Log::error('Error al guardar usuario en la BD');
-                return redirect()->route('usuarios.index')->withErrors(['error' => 'No se pudo crear el usuario']);
-            }
-            
-            return redirect()->route('usuarios.index');
+            return redirect()->route('usuarios.index')
+                           ->with('success', 'Usuario creado exitosamente');
         } catch (\Exception $e) {
             Log::error('Error al crear usuario: ' . $e->getMessage());
             return redirect()->route('usuarios.index')
@@ -62,22 +56,26 @@ class UsuarioController extends Controller
         }
     }
 
+    public function edit($id)
+    {
+        $usuario = Usuarios::findOrFail($id);
+        $action = route('usuarios.update', $usuario->id);
+        $method = 'PUT';
+        $title = 'Editar Usuario';
+        
+        return view('usuarios.form', compact('usuario', 'action', 'method', 'title'));
+    }
+
     public function update(Request $request, $id) 
     {
         try {
             $usuario = Usuarios::findOrFail($id);
+            $validated = $this->validateUsuario($request, $id);
             
-            $validated = $request->validate([
-                'nombre' => 'required|string|max:100',
-                'apellido' => 'required|string|max:100',
-                'telefono' => 'nullable|string|max:20',
-                'direccion' => 'nullable|string|max:255',
-                'dni' => 'required|string|max:20|unique:usuarios,dni,' . $id,
-            ]);
-
             $usuario->update($validated);
             
-            return redirect()->route('usuarios.index');
+            return redirect()->route('usuarios.index')
+                           ->with('success', 'Usuario actualizado exitosamente');
         } catch (\Exception $e) {
             Log::error('Error al actualizar usuario: ' . $e->getMessage());
             return redirect()->route('usuarios.index')
@@ -99,15 +97,14 @@ class UsuarioController extends Controller
         }
     }
 
-    public function edit($id)
+    private function validateUsuario(Request $request, $id = null)
     {
-        $usuario = Usuarios::findOrFail($id);
-        return view('usuarios.edit', compact('usuario'));
-    }
-
-    public function show($id)
-    {
-        $usuario = Usuarios::findOrFail($id);
-        return view('usuarios.show', compact('usuario'));
+        return $request->validate([
+            'nombre' => 'required|string|max:100',
+            'apellido' => 'required|string|max:100',
+            'telefono' => 'nullable|string|max:20',
+            'direccion' => 'nullable|string|max:255',
+            'dni' => 'required|string|max:20|unique:usuarios,dni,' . $id,
+        ]);
     }
 }
