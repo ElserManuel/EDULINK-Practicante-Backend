@@ -15,16 +15,12 @@
                     Crear Usuario
                 </button>
                 <a href="{{ route('usuarios.export') }}" 
-   class="inline-block px-6 py-3 text-white font-semibold text-lg rounded-lg shadow-md transition duration-300 ease-in-out ml-4"
-   style="background-color: #28a745; border: 2px solid #218838; color: white;"
-   onmouseover="this.style.backgroundColor='#218838'"
-   onmouseout="this.style.backgroundColor='#28a745'">
-    Exportar Excel
-</a>
-
-
-
-
+                    class="inline-block px-6 py-3 text-white font-semibold text-lg rounded-lg shadow-md transition duration-300 ease-in-out ml-4"
+                    style="background-color: #28a745; border: 2px solid #218838; color: white;"
+                    onmouseover="this.style.backgroundColor='#218838'"
+                    onmouseout="this.style.backgroundColor='#28a745'">
+                     Exportar Excel
+                </a>
                 <div class="overflow-x-auto mt-6">
                     <table class="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg shadow-md">
                         <thead class="bg-gray-200 dark:bg-gray-700">
