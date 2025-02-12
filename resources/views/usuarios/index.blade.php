@@ -121,8 +121,6 @@
                 });
             }
         }
-
-        // Event Listeners
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('userForm');
             if (form) {
